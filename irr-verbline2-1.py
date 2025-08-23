@@ -22,7 +22,7 @@ vocab = {
 if 'questions' not in st.session_state:
     words = list(vocab.items())
     questions = []
-    while len(questions) < 50:
+    while len(questions) < 40:
         word, meaning = random.choice(words)
 
         # 随机决定题型：True -> 英译中，False -> 中译英
@@ -49,12 +49,12 @@ if 'questions' not in st.session_state:
             "answer": correct_answer
         })
     st.session_state.questions = questions
-    st.session_state.user_answers = [""] * 50  # 初始化用户答案
+    st.session_state.user_answers = [""] * 40  # 初始化用户答案
 
 # -----------------------
 # Streamlit界面
 # -----------------------
-st.title("50题英语动词测试（中英混合题型）")
+st.title("40题英语动词测试（中英混合题型）")
 questions = st.session_state.questions
 user_answers = st.session_state.user_answers
 
@@ -75,7 +75,7 @@ if st.button("提交答案"):
     score = 0
     for ua, q in zip(user_answers, questions):
         if ua == q["answer"]:
-            score += 2  # 每题2分
+            score += 2.5  # 每题2.5分
     st.success(f"你的总分是：{score} / 100 分")
 
     st.subheader("正确答案汇总：")

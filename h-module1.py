@@ -97,6 +97,20 @@ vocab = {
     "nowhere near": "远不及"
 }
 
+# ✅ 同义表达字典
+synonyms = {
+    "commit oneself to do": ["promise to do", "make a commitment to do", "be determined to do"],
+    "insist on": ["persist in", "demand", "keep on"],
+    "take up position": ["assume a post", "accept a role", "begin a job"],
+    "sum up": ["conclude", "summarize", "wrap up"],
+    "early on": ["at first", "in the beginning", "initially"],
+    "in other words": ["that is to say", "to put it differently", "simply put"],
+    "for instance": ["for example", "such as", "like"],
+    "ahead of…": ["in front of", "before", "prior to"],
+    "focus on": ["concentrate on", "pay attention to", "emphasize"],
+    "set out": ["start off", "begin a journey", "depart"]
+}
+
 # ============ 发音按钮 ============
 def tts_button(word, key):
     components.html(f"""
@@ -158,21 +172,31 @@ def generate_part2(num=20):
         questions.append({"sentence": sentence, "options": labeled_options, "answer": answer_label})
     return questions
 
-# ============ 生成 Part3 听音拼写题 ============
+# ============ 生成 Part3 同义词替换题 ============
 def generate_part3(num=20):
-    words = list(vocab.items())
-    selected = random.sample(words, num)
+    keys_with_syn = list(synonyms.keys())
+    selected = random.sample(keys_with_syn, num if num <= len(keys_with_syn) else len(keys_with_syn))
     questions = []
-    for word, meaning in selected:
-        questions.append({"word": word, "meaning": meaning})
+    for key in selected:
+        correct_syn = random.choice(synonyms[key])
+        wrong_options = random.sample([random.choice(s) for k, s in synonyms.items() if k != key], 4)
+        options = [correct_syn] + wrong_options
+        random.shuffle(options)
+        labels = ["A", "B", "C", "D", "E"]
+        labeled_options = {label: opt for label, opt in zip(labels, options)}
+        for label, opt in labeled_options.items():
+            if opt == correct_syn:
+                answer_label = label
+                break
+        questions.append({"question": f"'{key}' has the same meaning as:", "options": labeled_options, "answer": answer_label})
     return questions
 
 # ============ 页面结构 ============
 st.title("🎯 高中必修一词组练习")
 
-mode = st.radio("选择练习类型：", ["Part 1 词汇选择题", "Part 2 短文选词填空", "Part 3 听音拼写"])
+mode = st.radio("选择练习类型：", ["Part 1 词汇选择题", "Part 2 短文选词填空", "Part 3 同义替换题"])
 
-# ================= Part1 词汇选择题 =================
+# ================= Part1 =================
 if mode == "Part 1 词汇选择题":
     st.header("📌 Part 1：词汇选择题（20题）")
     if "part1_qs" not in st.session_state:
@@ -191,7 +215,7 @@ if mode == "Part 1 词汇选择题":
         for i, q in enumerate(st.session_state.part1_qs):
             st.write(f"{i+1}. {q['question']} ✅ {q['answer']}")
 
-# ================= Part2 短文选词填空 =================
+# ================= Part2 =================
 elif mode == "Part 2 短文选词填空":
     st.header("📌 Part 2：五选一句子填空（20题）")
     if "part2_qs" not in st.session_state:
@@ -219,29 +243,30 @@ elif mode == "Part 2 短文选词填空":
                 st.write(f"{idx}. {ques}")
                 st.write(f"你的答案：{ans} | 正确答案：{correct}")
 
-# ================= Part3 听音拼写 =================
+# ================= Part3 同义替换题 =================
 else:
-    st.header("📌 Part 3：听音拼写（20题）")
+    st.header("📌 Part 3：同义替换题（20题）")
     if "part3_qs" not in st.session_state:
         st.session_state.part3_qs = generate_part3(20)
         st.session_state.part3_ans = [""] * 20
 
     for i, q in enumerate(st.session_state.part3_qs):
-        st.subheader(f"Word {i+1}: {q['meaning']}")
-        tts_button(q['word'], f"p3_{i}")
-        st.session_state.part3_ans[i] = st.text_input("请输入拼写：", key=f"p3_{i}_ans")
+        st.subheader(f"Question {i+1}: {q['question']}")
+        options_display = [f"{label}. {word}" for label, word in q["options"].items()]
+        st.session_state.part3_ans[i] = st.radio("请选择答案：", options_display, key=f"p3_{i}_ans")
 
     if st.button("提交答案", key="submit_p3"):
         score = 0
         wrong = []
         for i, q in enumerate(st.session_state.part3_qs):
-            if st.session_state.part3_ans[i].strip().lower() == q["word"].lower():
+            selected_label = st.session_state.part3_ans[i][0]
+            if selected_label == q["answer"]:
                 score += 1
             else:
-                wrong.append((q['meaning'], st.session_state.part3_ans[i], q["word"]))
+                wrong.append((q['question'], st.session_state.part3_ans[i], q['options'][q['answer']]))
         st.success(f"✅ 你的得分：{score}/{len(st.session_state.part3_qs)}")
         if wrong:
             st.error("❌ 错题回顾：")
-            for idx, (meaning, ans, correct) in enumerate(wrong, 1):
-                st.write(f"{idx}. {meaning}")
+            for idx, (ques, ans, correct) in enumerate(wrong, 1):
+                st.write(f"{idx}. {ques}")
                 st.write(f"你的答案：{ans} | 正确答案：{correct}")

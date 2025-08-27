@@ -1,15 +1,55 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import random
 
-# =========================
-# 不规则动词三列词汇
-# 英文原形: [过去式, 过去分词, 中文意思]
-# =========================
+st.set_page_config(page_title="不规则动词练习", layout="wide")
+
+# ============ 不规则动词数据库 ============
 vocab_full = {
-    "let": ["let", "let", "让"],
-    "lie": ["lay", "lain", "躺下"],
-    "light": ["lit", "lit", "点燃"],
-    "lose": ["lost", "lost", "丢失"],
+    "beat": ["beat", "beaten", "击打"],
+    "become": ["became", "become", "变成"],
+    "begin": ["began", "begun", "开始"],
+    "bite": ["bit", "bitten", "咬"],
+    "blow": ["blew", "blown", "吹"],
+    "break": ["broke", "broken", "打破"],
+    "bring": ["brought", "brought", "带来"],
+    "build": ["built", "built", "建造"],
+    "buy": ["bought", "bought", "买"],
+    "catch": ["caught", "caught", "抓住"],
+    "choose": ["chose", "chosen", "选择"],
+    "come": ["came", "come", "来"],
+    "cost": ["cost", "cost", "花费"],
+    "cut": ["cut", "cut", "切割"],
+    "do": ["did", "done", "做"],
+    "draw": ["drew", "drawn", "画"],
+    "drink": ["drank", "drunk", "喝"],
+    "drive": ["drove", "driven", "驾驶"],
+    "eat": ["ate", "eaten", "吃"],
+    "fall": ["fell", "fallen", "掉落"],
+    "feel": ["felt", "felt", "感觉"],
+    "fight": ["fought", "fought", "打架"],
+    "find": ["found", "found", "找到"],
+    "fly": ["flew", "flown", "飞"],
+    "forget": ["forgot", "forgotten", "忘记"],
+    "get": ["got", "got", "得到"],
+    "give": ["gave", "given", "给予"],
+    "go": ["went", "gone", "去"],
+    "grow": ["grew", "grown", "生长"],
+    "hang": ["hung", "hung", "悬挂"],
+    "have": ["had", "had", "有"],
+    "hear": ["heard", "heard", "听见"],
+    "hide": ["hid", "hidden", "隐藏"],
+    "hit": ["hit", "hit", "击打"],
+    "hold": ["held", "held", "握住"],
+    "hurt": ["hurt", "hurt", "伤害"],
+    "keep": ["kept", "kept", "保持"],
+    "know": ["knew", "known", "知道"],
+    "leave": ["left", "left", "离开"],
+    "lend": ["lent", "lent", "借出"],
+    "let": ["let", "let", "允许"],
+    "lie": ["lay", "lain", "躺"],
+    "light": ["lit", "lit", "点亮"],
+    "lose": ["lost", "lost", "失去"],
     "make": ["made", "made", "制作"],
     "mean": ["meant", "meant", "意味着"],
     "meet": ["met", "met", "遇见"],
@@ -49,78 +89,103 @@ vocab_full = {
     "write": ["wrote", "written", "写"]
 }
 
-# ------------------------
-# 构建题目列表（60题）
-# ------------------------
-if 'questions' not in st.session_state:
-    # 将三列拆开成可考的形式
-    all_words = []
-    for base, forms in vocab_full.items():
-        en_base, en_past, en_pp, cn = forms[0], forms[1], forms[2], forms[2] if len(forms)==3 else forms[2]
-        all_words.append((en_base, cn))
-        all_words.append((en_past, cn))
-        all_words.append((en_pp, cn))
-    # 去重
-    all_words = list(set(all_words))
-    
-    # 随机抽取 40 题
-    questions_sample = random.sample(all_words, 40)
+# ============ 发音按钮 ============
+def tts_button(word, key):
+    components.html(f"""
+    <button onclick="speak_{key}()">🔊 发音</button>
+    <script>
+    function speak_{key}() {{
+        var msg = new SpeechSynthesisUtterance("{word}");
+        msg.lang = 'en-US';
+        window.speechSynthesis.speak(msg);
+    }}
+    </script>
+    """, height=40)
+
+# ============ 生成选择题 ============
+def generate_choice_questions(num=30):
+    items = list(vocab_full.items())
     questions = []
-
-    for word, meaning in questions_sample:
-        # 随机决定题型 True=英译中，False=中译英
+    for _ in range(num):
+        word, forms = random.choice(items)
+        meaning = forms[2]
+        # 随机决定是中文提示英文选项，还是英文提示中文选项
         if random.choice([True, False]):
-            question_text = f"'{word}' 的中文意思是？"
-            correct_answer = meaning
-            wrong_options = random.sample([m for w, m in all_words if m != meaning], 4)
+            # 中文提示英文选项
+            question_text = f"‘{meaning}’ 用英语怎么说？"
+            answer = word
+            options = [word] + random.sample([w for w in vocab_full.keys() if w != word], 4)
         else:
-            question_text = f"“{meaning}” 对应的英文是？"
-            correct_answer = word
-            wrong_options = random.sample([w for w, m in all_words if w != word], 4)
+            # 英文提示中文选项
+            question_text = f"What is the meaning of '{word}'?"
+            answer = meaning
+            options = [meaning] + random.sample([v[2] for k,v in vocab_full.items() if k != word], 4)
+        random.shuffle(options)
+        questions.append({"question": question_text, "options": options, "answer": answer})
+    return questions
 
-        options = wrong_options.copy()
-        correct_index = random.randint(0, 4)
-        options.insert(correct_index, correct_answer)
+# ============ 生成填空题 ============
+def generate_fill_questions(num=20):
+    items = list(vocab_full.items())
+    questions = []
+    forms_idx = {"过去式":0,"过去分词":1}
+    for _ in range(num):
+        word, forms = random.choice(items)
+        qtype = random.choice(["原形","过去式","过去分词","meaning"])
+        if qtype == "meaning":
+            question_text = f"请写出‘{forms[2]}’的英文单词"
+            answer = word
+        elif qtype == "原形":
+            question_text = f"请写出'{word}'的原形形式"
+            answer = word
+        else:
+            question_text = f"请写出'{word}'的{qtype}形式"
+            answer = forms[forms_idx[qtype]]
+        questions.append({"question": question_text, "answer": answer, "pronounce": answer})
+    return questions
 
-        questions.append({
-            "question": question_text,
-            "options": options,
-            "answer": correct_answer
-        })
+# ============ 页面结构 ============
+st.title("🎯 不规则动词练习系统")
 
-    st.session_state.questions = questions
-    st.session_state.user_answers = [""] * len(questions)
+mode = st.radio("选择练习类型：", ["选择题 30题", "填空题 20题"])
 
-# ------------------------
-# Streamlit 界面
-# ------------------------
-st.title("不规则动词综合测试（原形/过去式/过去分词）40题，满分100")
-questions = st.session_state.questions
-user_answers = st.session_state.user_answers
-option_labels = ['A', 'B', 'C', 'D', 'E']
+# ================= 选择题 =================
+if mode == "选择题 30题":
+    if "choice_qs" not in st.session_state:
+        st.session_state.choice_qs = generate_choice_questions(30)
+        st.session_state.choice_ans = [""]*30
 
-for i, q in enumerate(questions):
-    st.subheader(f"第 {i+1} 题: {q['question']}")
-    user_answers[i] = st.radio(
-        "请选择答案：",
-        q["options"],
-        index=q["options"].index(user_answers[i]) if user_answers[i] else 0,
-        key=f"q{i}"
-    )
+    for i, q in enumerate(st.session_state.choice_qs):
+        st.subheader(f"Q{i+1}: {q['question']}")
+        st.session_state.choice_ans[i] = st.radio("请选择答案：", q["options"], key=f"c_{i}_ans")
 
-# ------------------------
-# 提交按钮
-# ------------------------
-if st.button("提交答案"):
-    score = 0
-    for ua, q in zip(user_answers, questions):
-        if ua == q["answer"]:
-            score += 100 / len(questions)
-    st.success(f"你的总分是：{round(score)} / 100 分")
+    if st.button("提交选择题答案"):
+        score = sum(1 for i,q in enumerate(st.session_state.choice_qs) if st.session_state.choice_ans[i]==q["answer"])
+        st.success(f"✅ 得分：{score*100/30:.1f} / 100")
+        wrong = [(i+1, q['question'], st.session_state.choice_ans[i], q["answer"]) for i,q in enumerate(st.session_state.choice_qs) if st.session_state.choice_ans[i]!=q["answer"]]
+        if wrong:
+            st.error("❌ 错题回顾：")
+            for w in wrong:
+                st.write(f"{w[0]}. {w[1]}")
+                st.write(f"你的答案：{w[2]} | 正确答案：{w[3]}")
 
-    st.subheader("所有正确答案：")
-    for i, q in enumerate(questions):
-        st.write(f"第 {i+1} 题: {q['question']}")
-        for idx, opt in enumerate(q['options']):
-            mark = " ✅" if opt == q["answer"] else ""
-            st.write(f"{option_labels[idx]}. {opt} {mark}")
+# ================= 填空题 =================
+else:
+    if "fill_qs" not in st.session_state:
+        st.session_state.fill_qs = generate_fill_questions(20)
+        st.session_state.fill_ans = [""]*20
+
+    for i,q in enumerate(st.session_state.fill_qs):
+        st.subheader(f"Q{i+1}: {q['question']}")
+        st.session_state.fill_ans[i] = st.text_input("你的答案：", key=f"f_{i}_ans")
+
+    if st.button("提交填空题答案"):
+        score = sum(1 for i,q in enumerate(st.session_state.fill_qs) if st.session_state.fill_ans[i].strip().lower()==q["answer"].lower())
+        st.success(f"✅ 得分：{score*5} / 100")
+        wrong = [(i+1, q['question'], st.session_state.fill_ans[i], q["answer"], q["pronounce"]) for i,q in enumerate(st.session_state.fill_qs) if st.session_state.fill_ans[i].strip().lower()!=q["answer"].lower()]
+        if wrong:
+            st.error("❌ 错题回顾：")
+            for w in wrong:
+                st.write(f"{w[0]}. {w[1]}")
+                st.write(f"你的答案：{w[2]} | 正确答案：{w[3]}")
+                tts_button(w[4], f"wrong_{w[0]}")

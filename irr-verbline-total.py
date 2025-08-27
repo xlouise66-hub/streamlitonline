@@ -111,12 +111,10 @@ def generate_choice_questions(num=30):
         meaning = forms[2]
         # 随机决定是中文提示英文选项，还是英文提示中文选项
         if random.choice([True, False]):
-            # 中文提示英文选项
             question_text = f"‘{meaning}’ 用英语怎么说？"
             answer = word
             options = [word] + random.sample([w for w in vocab_full.keys() if w != word], 4)
         else:
-            # 英文提示中文选项
             question_text = f"What is the meaning of '{word}'?"
             answer = meaning
             options = [meaning] + random.sample([v[2] for k,v in vocab_full.items() if k != word], 4)
@@ -124,23 +122,16 @@ def generate_choice_questions(num=30):
         questions.append({"question": question_text, "options": options, "answer": answer})
     return questions
 
-# ============ 生成填空题 ============
+# ============ 生成填空题（仅过去式+过去分词） ============
 def generate_fill_questions(num=20):
     items = list(vocab_full.items())
     questions = []
     forms_idx = {"过去式":0,"过去分词":1}
     for _ in range(num):
         word, forms = random.choice(items)
-        qtype = random.choice(["原形","过去式","过去分词","meaning"])
-        if qtype == "meaning":
-            question_text = f"请写出‘{forms[2]}’的英文单词"
-            answer = word
-        elif qtype == "原形":
-            question_text = f"请写出'{word}'的原形形式"
-            answer = word
-        else:
-            question_text = f"请写出'{word}'的{qtype}形式"
-            answer = forms[forms_idx[qtype]]
+        qtype = random.choice(["过去式","过去分词"])
+        question_text = f"请写出'{word}'的{qtype}形式"
+        answer = forms[forms_idx[qtype]]
         questions.append({"question": question_text, "answer": answer, "pronounce": answer})
     return questions
 
@@ -169,7 +160,7 @@ if mode == "选择题 30题":
                 st.write(f"{w[0]}. {w[1]}")
                 st.write(f"你的答案：{w[2]} | 正确答案：{w[3]}")
 
-# ================= 填空题 =================
+# ================= 填空题（仅过去式和过去分词） =================
 else:
     if "fill_qs" not in st.session_state:
         st.session_state.fill_qs = generate_fill_questions(20)

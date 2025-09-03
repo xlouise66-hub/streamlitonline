@@ -4,7 +4,7 @@ import random
 
 st.set_page_config(page_title="沪教版八上U1词汇练习", layout="wide")
 
-# ============ 八上U1词汇表 ============ 
+# ============ 八上U1词汇表 ============
 vocab = {
     "dinosaur": "恐龙",
     "intelligent": "有才智的；聪明的",
@@ -121,11 +121,19 @@ if mode == "Part 1 词汇选择题":
         st.session_state.part1_ans[i] = st.radio("请选择答案：", q["options"], key=f"p1_{i}_ans")
 
     if st.button("提交答案", key="submit_p1"):
-        score = sum(1 for i, q in enumerate(st.session_state.part1_qs) if st.session_state.part1_ans[i] == q["answer"])
-        st.success(f"✅ 你的得分：{score * 5} / 100")
-        st.write("正确答案：")
+        score = 0
+        wrong = []
         for i, q in enumerate(st.session_state.part1_qs):
-            st.write(f"{i+1}. {q['question']} ✅ {q['answer']}")
+            if st.session_state.part1_ans[i] == q["answer"]:
+                score += 1
+            else:
+                wrong.append((q['question'], st.session_state.part1_ans[i], q['answer']))
+        st.success(f"✅ 你的得分：{score * 5} / 100")
+        if wrong:
+            st.error("❌ 错题回顾：")
+            for idx, (ques, ans, correct) in enumerate(wrong, 1):
+                st.write(f"{idx}. {ques}")
+                st.write(f"你的答案：{ans} | 正确答案：{correct}")
 
 # ================= Part2 短文选词填空 =================
 elif mode == "Part 2 短文选词填空":

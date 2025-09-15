@@ -1,40 +1,43 @@
 import streamlit as st
 import random
 
-st.set_page_config(page_title="英语练习系统 - Unit 1", layout="wide")
+st.set_page_config(page_title="英语练习系统 - Unit 2", layout="wide")
 
 # ================== 词汇表 ==================
 vocab = {
-    "dinosaur": "恐龙",
-    "intelligent": "有才智的；聪明的",
-    "talented": "有才能的；天才的",
-    "artistic": "有艺术天赋的；（尤指）有美术才能的",
-    "perhaps": "可能；大概；也许",
-    "notebook": "笔记本",
-    "vehicle": "交通工具；车辆",
-    "prehistoric": "史前的",
-    "completely": "完全地；彻底地",
-    "original": "原来的；起初的",
-    "birth": "出生",
-    "suffering": "苦难；疼痛",
-    "artist": "艺术家；（尤指）画家",
-    "death": "死；死亡",
-    "whole": "全部的；所有的",
-    "piece": "一首，一篇（作品）",
-    "editor": "（书籍的）编辑",
-    "organize": "安排；组织",
-    "order": "顺序",
-    "record": "记录",
+    "flight": "（尤指乘飞机的）航程",
+    "schedule": "日程安排",
+    "everywhere": "到处；各个地方",
+    "challenge": "向（某人）挑战",
+    "prize": "奖赏；奖励",
+    "promise": "承诺；保证",
+    "chessboard": "国际象棋棋盘",
+    "silver": "银",
+    "reply": "回复；答复",
+    "hesitation": "犹豫",
+    "wonder": "想知道；琢磨",
+    "agree": "同意；赞成",
+    "per cent": "百分之……",
+    "currently": "目前；当前",
+    "check": "检查；核查",
+    "budget": "预算",
+    "province": "省份",
+    "sharply": "急剧地；突然大幅度地",
+    "count": "计算（或清点）总数",
+    "system": "系统",
+    "symbol": "符号；记号",
+    "represent": "代表",
+    "exactly": "准确地；确切地",
 
     # 短语与表达
-    "general education": "通识教育",
-    "go back a long way": "历史悠久",
-    "be similar to": "与……相似",
-    "alphabetical order": "字母顺序",
-    "play an important role": "起到重要作用",
-    "die out": "灭绝",
-    "a type of": "一种",
-    "be related to": "与……属于同一种类"
+    "flight schedule": "航班时刻表",
+    "price tag": "价格标签",
+    "for a moment": "片刻；一会儿",
+    "without hesitation": "毫不犹豫",
+    "go up": "上升",
+    "go down": "下降",
+    "write down": "写下；记下",
+    "instead of": "代替；作为……的替换"
 }
 
 # ================== 拼写练习 ==================

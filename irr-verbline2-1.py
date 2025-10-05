@@ -21,26 +21,31 @@ vocab = {
 # -----------------------
 if 'questions' not in st.session_state:
     words = list(vocab.items())
+    random.shuffle(words)  # 打乱顺序
     questions = []
-    while len(questions) < 40:
-        word, meaning = random.choice(words)
 
-        # 随机决定题型：True -> 英译中，False -> 中译英
+    used_words = set()  # 避免重复题目
+
+    while len(questions) < 40 and len(used_words) < len(words):
+        word, meaning = random.choice(words)
+        if word in used_words:
+            continue  # 避免重复题目
+        used_words.add(word)
+
+        # 随机题型：True=英译中，False=中译英
         is_eng_to_ch = random.choice([True, False])
         if is_eng_to_ch:
             question_text = f"What is the meaning of '{word}'?"
             correct_answer = meaning
-            # 选项：其他中文意思
             wrong_options = random.sample([m for k, m in words if m != meaning], 4)
         else:
             question_text = f"'{meaning}' 的英文是？"
             correct_answer = word
-            # 选项：其他英文单词
             wrong_options = random.sample([k for k, m in words if k != word], 4)
 
-        # 正确答案随机插入
+        # 插入正确答案到随机位置
         correct_index = random.randint(0, 4)
-        options = wrong_options
+        options = wrong_options.copy()
         options.insert(correct_index, correct_answer)
 
         questions.append({
@@ -48,8 +53,9 @@ if 'questions' not in st.session_state:
             "options": options,
             "answer": correct_answer
         })
+
     st.session_state.questions = questions
-    st.session_state.user_answers = [""] * 40  # 初始化用户答案
+    st.session_state.user_answers = [""] * len(questions)
 
 # -----------------------
 # Streamlit界面
@@ -60,7 +66,6 @@ user_answers = st.session_state.user_answers
 
 for i, q in enumerate(questions):
     st.subheader(f"Question {i+1}: {q['question']}")
-    # 固定选项顺序，绑定session_state
     user_answers[i] = st.radio(
         "选择答案：",
         q["options"],
@@ -73,15 +78,23 @@ for i, q in enumerate(questions):
 # -----------------------
 if st.button("提交答案"):
     score = 0
-    for ua, q in zip(user_answers, questions):
+    wrong_list = []
+
+    for idx, (ua, q) in enumerate(zip(user_answers, questions)):
         if ua == q["answer"]:
             score += 2.5  # 每题2.5分
+        else:
+            wrong_list.append((idx + 1, q['question'], ua, q['answer']))
+
     st.success(f"你的总分是：{score} / 100 分")
 
-    st.subheader("正确答案汇总：")
-    option_labels = ['A', 'B', 'C', 'D', 'E']
-    for i, q in enumerate(questions):
-        st.write(f"Question {i+1}: {q['question']}")
-        for idx, opt in enumerate(q['options']):
-            mark = "(正确答案)" if opt == q["answer"] else ""
-            st.write(f"{option_labels[idx]}. {opt} {mark}")
+    if wrong_list:
+        st.subheader("错题回顾：")
+        for i, q_text, user_ans, correct_ans in wrong_list:
+            st.write(f"Question {i}: {q_text}")
+            st.write(f"❌ 你的答案: {user_ans}")
+            st.write(f"✅ 正确答案: {correct_ans}")
+            st.write("---")
+    else:
+        st.balloons()
+        st.success("太棒啦！全部答对 🎉")

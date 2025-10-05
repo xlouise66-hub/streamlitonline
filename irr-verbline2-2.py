@@ -61,7 +61,6 @@ user_answers = st.session_state.user_answers
 
 for i, q in enumerate(questions):
     st.subheader(f"Question {i+1}: {q['question']}")
-    # 固定选项顺序，绑定session_state
     user_answers[i] = st.radio(
         "Select an answer:",
         q["options"],
@@ -74,15 +73,22 @@ for i, q in enumerate(questions):
 # -----------------------
 if st.button("提交答案"):
     score = 0
-    for ua, q in zip(user_answers, questions):
+    wrong_list = []
+    for idx, (ua, q) in enumerate(zip(user_answers, questions)):
         if ua == q["answer"]:
             score += 2.5  # 每题2.5分
+        else:
+            wrong_list.append((idx + 1, q["question"], ua, q["answer"]))
+
     st.success(f"你的总分是：{score} / 100 分")
 
-    st.subheader("所有正确答案：")
-    option_labels = ['A', 'B', 'C', 'D', 'E']
-    for i, q in enumerate(questions):
-        st.write(f"Question {i+1}: {q['question']}")
-        for idx, opt in enumerate(q['options']):
-            mark = "(正确答案)" if opt == q["answer"] else ""
-            st.write(f"{option_labels[idx]}. {opt} {mark}")
+    if wrong_list:
+        st.error("以下是错题回顾：")
+        for i, q_text, user_ans, correct_ans in wrong_list:
+            st.write(f"Question {i}: {q_text}")
+            st.write(f"❌ 你的答案: {user_ans}")
+            st.write(f"✅ 正确答案: {correct_ans}")
+            st.write("---")
+    else:
+        st.balloons()
+        st.success("太棒啦！全部答对 🎉")

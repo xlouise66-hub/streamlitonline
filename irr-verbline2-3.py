@@ -17,21 +17,27 @@ vocab = {
 }
 
 # =========================
-# 初始化题目
+# 初始化题目，只执行一次
 # =========================
 if 'questions' not in st.session_state:
     words = list(vocab.items())
     random.shuffle(words)  # 打乱顺序
     questions = []
 
+    used_words = set()  # 用于去重
+
     for word, meaning in words:
-        question_type = random.choice(["en_to_cn", "cn_to_en"])
-        if question_type == "en_to_cn":
+        if word in used_words:
+            continue
+        used_words.add(word)
+
+        # 随机题型
+        is_eng_to_ch = random.choice([True, False])
+        if is_eng_to_ch:
             # 英译中
             wrong_options = random.sample([m for _, m in words if m != meaning], 4)
-            correct_index = random.randint(0, 4)
-            options = wrong_options
-            options.insert(correct_index, meaning)
+            options = wrong_options.copy()
+            options.insert(random.randint(0, 4), meaning)
             questions.append({
                 "question": f"'{word}' 的中文意思是？",
                 "options": options,
@@ -40,9 +46,8 @@ if 'questions' not in st.session_state:
         else:
             # 中译英
             wrong_options = random.sample([w for w, _ in words if w != word], 4)
-            correct_index = random.randint(0, 4)
-            options = wrong_options
-            options.insert(correct_index, word)
+            options = wrong_options.copy()
+            options.insert(random.randint(0, 4), word)
             questions.append({
                 "question": f"“{meaning}” 对应的英文是？",
                 "options": options,
@@ -75,15 +80,24 @@ for i, q in enumerate(questions):
 # =========================
 if st.button("提交答案"):
     score = 0
-    for ua, q in zip(user_answers, questions):
+    wrong_list = []
+
+    # 计算分数并收集错题
+    for idx, (ua, q) in enumerate(zip(user_answers, questions)):
         if ua == q["answer"]:
             score += 100 / len(questions)
+        else:
+            wrong_list.append((idx + 1, q['question'], ua, q['answer']))
 
     st.success(f"你的总分是：{round(score)} / 100 分")
 
-    st.subheader("正确答案：")
-    for i, q in enumerate(questions):
-        st.write(f"第 {i+1} 题: {q['question']}")
-        for idx, opt in enumerate(q['options']):
-            mark = "(✔ 正确答案)" if opt == q["answer"] else ""
-            st.write(f"{option_labels[idx]}. {opt} {mark}")
+    if wrong_list:
+        st.subheader("错题回顾：")
+        for i, q_text, user_ans, correct_ans in wrong_list:
+            st.write(f"第 {i} 题: {q_text}")
+            st.write(f"❌ 你的答案: {user_ans}")
+            st.write(f"✅ 正确答案: {correct_ans}")
+            st.write("---")
+    else:
+        st.balloons()
+        st.success("太棒啦！全部答对 🎉")
